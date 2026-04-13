@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Subscription Plans - FoodieHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-5">
+    <h2 class="fw-bold">👑 FoodieHub Subscription</h2>
+    <p class="text-muted">Get the best deals every month — free delivery, extra discounts and more!</p>
+  </div>
+  <div class="row justify-content-center g-4">
+    <!-- Free Plan -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100 text-center p-4">
+        <div style="font-size:40px;">🆓</div>
+        <h4 class="fw-bold mt-2">Free</h4>
+        <div class="text-muted fs-5 mb-3">₹0 / month</div>
+        <ul class="list-unstyled text-start small text-muted mb-4">
+          <li class="mb-2">✅ Browse all restaurants</li>
+          <li class="mb-2">✅ Standard delivery charges apply</li>
+          <li class="mb-2">✅ Use coupons</li>
+          <li class="mb-2 text-muted">❌ No extra discounts</li>
+        </ul>
+        <div class="mt-auto">
+          {% if profile.subscription_plan == 'none' %}
+          <button class="btn btn-outline-secondary w-100" disabled>Current Plan</button>
+          {% else %}
+          <span class="text-muted small">Your old plan</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- Basic Plan -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100 text-center p-4">
+        <div style="font-size:40px;">⭐</div>
+        <h4 class="fw-bold mt-2">Basic</h4>
+        <div class="text-warning fw-bold fs-3 mb-1">₹99<span class="text-muted fs-6 fw-normal"> / month</span></div>
+        <div class="text-muted small mb-3">Billed monthly</div>
+        <ul class="list-unstyled text-start small mb-4">
+          <li class="mb-2">✅ Free delivery on orders ₹299+</li>
+          <li class="mb-2">✅ 5% extra discount on all orders</li>
+          <li class="mb-2">✅ Early access to flash sales</li>
+          <li class="mb-2">✅ Birthday special offer</li>
+        </ul>
+        <div class="mt-auto">
+          {% if profile.subscription_plan == 'basic' and profile.subscription_active %}
+          <button class="btn btn-warning w-100 fw-bold" disabled>✅ Current Plan</button>
+          {% else %}
+          <form method="post" action="{% url 'profiles:subscribe' %}">
+            {% csrf_token %}
+            <input type="hidden" name="plan" value="basic">
+            <button type="submit" class="btn btn-outline-warning w-100 fw-bold">Subscribe — ₹99</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- Premium Plan -->
+    <div class="col-md-4">
+      <div class="card border-warning shadow-lg h-100 text-center p-4" style="border-width:2px !important;background:#fff9e6;">
+        <div class="badge bg-warning text-dark mb-2">Most Popular</div>
+        <div style="font-size:40px;">👑</div>
+        <h4 class="fw-bold mt-2">Premium</h4>
+        <div class="text-warning fw-bold fs-3 mb-1">₹199<span class="text-muted fs-6 fw-normal"> / month</span></div>
+        <div class="text-muted small mb-3">Best value!</div>
+        <ul class="list-unstyled text-start small mb-4">
+          <li class="mb-2">✅ Free delivery on ALL orders</li>
+          <li class="mb-2">✅ 10% extra discount always</li>
+          <li class="mb-2">✅ Priority order processing</li>
+          <li class="mb-2">✅ Birthday month special offer</li>
+          <li class="mb-2">✅ Exclusive flash sale access</li>
+          <li class="mb-2">✅ 2× referral bonus credits</li>
+        </ul>
+        <div class="mt-auto">
+          {% if profile.subscription_plan == 'premium' and profile.subscription_active %}
+          <button class="btn btn-warning w-100 fw-bold" disabled>✅ Current Plan</button>
+          {% else %}
+          <form method="post" action="{% url 'profiles:subscribe' %}">
+            {% csrf_token %}
+            <input type="hidden" name="plan" value="premium">
+            <button type="submit" class="btn btn-warning w-100 fw-bold">Subscribe — ₹199</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}My Rewards - FoodieHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+
+  <!-- Level Card -->
+  <div class="card border-0 shadow-lg mb-4 overflow-hidden">
+    <div class="card-body p-0">
+      <div class="row g-0">
+        <div class="col-md-5 p-4 text-center" style="background:#1a1a2e;">
+          <div style="font-size:60px;margin-bottom:8px;">{{ profile.get_level_name }}</div>
+          <h4 class="text-white fw-bold">{{ request.user.username }}</h4>
+          <div class="text-warning fw-bold fs-3 mt-2">{{ profile.total_points }} pts</div>
+          <div class="text-muted small">Total Points</div>
+          <div class="mt-3">
+            <div class="d-flex justify-content-between small text-white-50 mb-1">
+              <span>Level {{ profile.level }}</span>
+              <span>{{ profile.points_to_next_level }} pts to next</span>
+            </div>
+            <div class="progress" style="height:8px;border-radius:4px;">
+              <div class="progress-bar bg-warning" style="width:{{ profile.level_progress_percent }}%;border-radius:4px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-7 p-4">
+          <h5 class="fw-bold mb-3">📊 My Stats</h5>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="stat-mini bg-light rounded-3 p-3 text-center">
+                <div class="fw-bold fs-4 text-warning">{{ profile.total_orders }}</div>
+                <div class="text-muted small">Total Orders</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="stat-mini bg-light rounded-3 p-3 text-center">
+                <div class="fw-bold fs-4 text-success">₹{{ profile.total_spent|floatformat:0 }}</div>
+                <div class="text-muted small">Total Spent</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="stat-mini bg-light rounded-3 p-3 text-center">
+                <div class="fw-bold fs-4 text-danger">🔥 {{ profile.current_streak }}</div>
+                <div class="text-muted small">Current Streak</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="stat-mini bg-light rounded-3 p-3 text-center">
+                <div class="fw-bold fs-4 text-primary">🏆 {{ profile.longest_streak }}</div>
+                <div class="text-muted small">Best Streak</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Badges -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm p-4">
+        <h5 class="fw-bold mb-4">🏅 Badges</h5>
+        <div class="row g-3">
+          {% for badge in all_badges %}
+          <div class="col-4">
+            <div class="badge-card text-center p-3 rounded-3 {% if badge in earned_badges %}badge-earned{% else %}badge-locked{% endif %}">
+              <div style="font-size:32px;{% if badge not in earned_badges %}filter:grayscale(1);opacity:.4;{% endif %}">
+                {{ badge.icon }}
+              </div>
+              <div class="fw-semibold small mt-2" style="{% if badge not in earned_badges %}color:var(--color-text-secondary);{% endif %}">
+                {{ badge.name }}
+              </div>
+              <div style="font-size:10px;color:var(--color-text-secondary);">+{{ badge.points_reward }} pts</div>
+              {% if badge in earned_badges %}
+              <span class="badge bg-success mt-1" style="font-size:9px;">✓ Earned</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Points -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm p-4">
+        <h5 class="fw-bold mb-4">💰 Points History</h5>
+        {% for tx in transactions %}
+        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+          <div>
+            <div class="small fw-semibold">{{ tx.reason }}</div>
+            <div style="font-size:10px;color:var(--color-text-secondary);">{{ tx.created_at|timesince }} ago</div>
+          </div>
+          <span class="fw-bold {% if tx.points > 0 %}text-success{% else %}text-danger{% endif %}">
+            {% if tx.points > 0 %}+{% endif %}{{ tx.points }}
+          </span>
+        </div>
+        {% empty %}
+        <p class="text-muted small">No transactions yet. Place an order to earn points!</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_css %}
+<style>
+.badge-card { border: 0.5px solid var(--color-border-tertiary); transition: .2s; }
+.badge-earned { background: #fff9e6; border-color: #ffc107; }
+.badge-locked { background: var(--color-background-secondary); }
+.badge-card:hover { transform: translateY(-2px); }
+</style>
+{% endblock %}

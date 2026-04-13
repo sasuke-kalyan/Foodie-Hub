@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Chat - {{ restaurant.name }}{% endblock %}
+{% block extra_css %}
+<style>
+.chat-container { height: 480px; overflow-y: auto; background: var(--bs-light); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.msg-bubble { max-width: 72%; padding: 10px 14px; border-radius: 18px; font-size: 13px; line-height: 1.5; position: relative; }
+.msg-customer { background: #ffc107; color: #000; border-bottom-right-radius: 4px; align-self: flex-end; }
+.msg-owner { background: #fff; border: 1px solid #eee; color: #333; border-bottom-left-radius: 4px; align-self: flex-start; }
+.msg-time { font-size: 10px; opacity: .6; margin-top: 3px; }
+.msg-wrapper { display: flex; flex-direction: column; }
+.msg-wrapper.customer { align-items: flex-end; }
+.msg-wrapper.owner { align-items: flex-start; }
+.online-dot { width: 10px; height: 10px; border-radius: 50%; background: #198754; display: inline-block; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-lg overflow-hidden">
+        <!-- Chat Header -->
+        <div class="card-header p-3 d-flex align-items-center gap-3" style="background:#1a1a2e;">
+          <div style="width:44px;height:44px;border-radius:50%;background:#ffc107;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🍽️</div>
+          <div class="flex-grow-1">
+            <div class="fw-bold text-white">{{ restaurant.name }}</div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="online-dot"></span>
+              <small class="text-success">Online</small>
+            </div>
+          </div>
+          <a href="{% url 'restaurants:detail' restaurant.slug %}" class="btn btn-outline-light btn-sm">View Menu</a>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-container" id="chatContainer">
+          {% for msg in chat_messages %}
+          <div class="msg-wrapper {% if msg.sender_type == 'customer' %}customer{% else %}owner{% endif %}">
+            <div class="msg-bubble msg-{{ msg.sender_type }}">
+              {{ msg.message }}
+              <div class="msg-time">{{ msg.created_at|date:"h:i A" }}</div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center text-muted py-5">
+            <div style="font-size:50px;">💬</div>
+            <p class="mt-2">Start a conversation with {{ restaurant.name }}</p>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Quick Replies -->
+        <div class="px-3 pt-2 d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-warning btn-sm" onclick="quickMsg('Is my order ready?')">Is my order ready?</button>
+          <button class="btn btn-outline-warning btn-sm" onclick="quickMsg('How long will delivery take?')">Delivery time?</button>
+          <button class="btn btn-outline-warning btn-sm" onclick="quickMsg('Can I customize my order?')">Customize order?</button>
+        </div>
+
+        <!-- Message Input -->
+        <div class="card-footer p-3 bg-white">
+          <form method="post" id="chatForm" class="d-flex gap-2">
+            {% csrf_token %}
+            <input type="text" name="message" id="msgInput" class="form-control" placeholder="Type a message..." autocomplete="off" required>
+            <button type="submit" class="btn btn-warning fw-bold px-4">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const chatContainer = document.getElementById('chatContainer');
+chatContainer.scrollTop = chatContainer.scrollHeight;
+
+function quickMsg(text) {
+  document.getElementById('msgInput').value = text;
+  document.getElementById('msgInput').focus();
+}
+
+// Auto-poll for new messages every 5 seconds
+let lastMsgId = {{ chat_messages.last.id|default:0 }};
+function pollMessages() {
+  fetch(`/chat/api/{{ room.id }}/messages/?after=${lastMsgId}`)
+    .then(r => r.json())
+    .then(data => {
+      data.messages.forEach(msg => {
+        if (msg.sender_type === 'owner') {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'msg-wrapper owner';
+          wrapper.innerHTML = `<div class="msg-bubble msg-owner">${msg.message}<div class="msg-time">${msg.time}</div></div>`;
+          chatContainer.appendChild(wrapper);
+          lastMsgId = msg.id;
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      });
+    });
+}
+setInterval(pollMessages, 5000);
+
+document.getElementById('chatForm').addEventListener('submit', function() {
+  setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 300);
+});
+</script>
+{% endblock %}

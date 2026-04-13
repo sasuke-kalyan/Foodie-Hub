@@ -1,0 +1,63 @@
+<!-- ADD THIS CARD to owner_dashboard/dashboard.html inside the container, after stats row -->
+
+<!-- Auto Close / Schedule Card -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <h5 class="fw-bold mb-0"><i class="fas fa-clock text-warning me-2"></i>Restaurant Status & Auto-Schedule</h5>
+    <div class="d-flex align-items-center gap-3">
+      <span class="fw-semibold">
+        Status:
+        {% if restaurant.is_active %}
+          <span class="badge bg-success fs-6 px-3">🟢 Open</span>
+        {% else %}
+          <span class="badge bg-danger fs-6 px-3">🔴 Closed</span>
+        {% endif %}
+      </span>
+      <a href="{% url 'owner_dashboard:toggle_status' restaurant.id %}"
+         class="btn {% if restaurant.is_active %}btn-outline-danger{% else %}btn-success{% endif %} fw-semibold">
+        {% if restaurant.is_active %}
+          <i class="fas fa-door-closed me-1"></i>Close Now
+        {% else %}
+          <i class="fas fa-door-open me-1"></i>Open Now
+        {% endif %}
+      </a>
+    </div>
+  </div>
+  <div class="card-body">
+    <form method="post" action="{% url 'owner_dashboard:set_auto_close' %}" class="row g-3 align-items-end">
+      {% csrf_token %}
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Auto-Open Time</label>
+        <input type="time" name="auto_open_time" class="form-control" value="{{ request.session.auto_open_time }}">
+        <small class="text-muted">Restaurant opens automatically at this time</small>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Auto-Close Time</label>
+        <input type="time" name="auto_close_time" class="form-control" value="{{ request.session.auto_close_time }}">
+        <small class="text-muted">Restaurant closes automatically at this time</small>
+      </div>
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-warning fw-bold w-100">
+          <i class="fas fa-save me-2"></i>Save Schedule
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add this script at bottom of dashboard for auto-check -->
+<script>
+setInterval(() => {
+  fetch("{% url 'owner_dashboard:check_auto_close' %}")
+    .then(r => r.json())
+    .then(data => {
+      if (data.action) {
+        const msg = data.action === 'closed'
+          ? '🔴 Restaurant auto-closed!'
+          : '🟢 Restaurant auto-opened!';
+        alert(msg);
+        location.reload();
+      }
+    });
+}, 60000); // Check every 60 seconds
+</script>

@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block title %}Checkout - FoodieHub{% endblock %}
+{% block extra_css %}
+<style>
+#map { height: 350px; width: 100%; border-radius: 12px; border: 2px solid #ffc107; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h3 class="fw-bold mb-4"><i class="fas fa-credit-card text-warning me-2"></i>Checkout</h3>
+  <form method="post" action="{% url 'orders:place' %}">
+    {% csrf_token %}
+    <div class="row g-4">
+      <div class="col-lg-7">
+
+        <!-- Delivery Address -->
+        <div class="card border-0 shadow-sm p-4 mb-4">
+          <h5 class="fw-bold mb-3"><i class="fas fa-map-marker-alt text-warning me-2"></i>Delivery Address</h5>
+
+          {% if addresses %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Saved Addresses</label>
+            {% for addr in addresses %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="saved_addr" id="addr{{ forloop.counter }}"
+                     value="{{ addr.address_line }}, {{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}"
+                     onclick="document.getElementById('delivery_address').value=this.value"
+                     {% if addr.is_default %}checked{% endif %}>
+              <label class="form-check-label" for="addr{{ forloop.counter }}">
+                <span class="badge bg-warning text-dark me-1">{{ addr.label }}</span>
+                {{ addr.address_line }}, {{ addr.city }}
+              </label>
+            </div>
+            {% endfor %}
+            <hr><p class="text-muted small">Or enter a new address below / pick on map:</p>
+          </div>
+          {% endif %}
+
+          <!-- Google Map -->
+          {% if google_maps_key %}
+          <div id="map" class="mb-3"></div>
+          <small class="text-muted mb-2 d-block"><i class="fas fa-info-circle me-1"></i>Click on the map to set delivery location</small>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Full Delivery Address</label>
+            <textarea name="delivery_address" id="delivery_address" class="form-control" rows="3"
+              placeholder="Enter full delivery address..." required></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Phone Number</label>
+            <input type="tel" name="phone" class="form-control" value="{{ user.phone }}" placeholder="+91 XXXXX XXXXX" required>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="card border-0 shadow-sm p-4 mb-4">
+          <h5 class="fw-bold mb-3"><i class="fas fa-wallet text-warning me-2"></i>Payment Method</h5>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="payment-option">
+                <input type="radio" name="payment_method" id="cod" value="cod" class="d-none" checked>
+                <label for="cod" class="payment-label d-flex flex-column align-items-center gap-2 p-3 border rounded-3 cursor-pointer w-100">
+                  <span style="font-size:32px;">💵</span>
+                  <span class="fw-semibold">Cash on Delivery</span>
+                </label>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="payment-option">
+                <input type="radio" name="payment_method" id="online" value="online" class="d-none">
+                <label for="online" class="payment-label d-flex flex-column align-items-center gap-2 p-3 border rounded-3 cursor-pointer w-100">
+                  <span style="font-size:32px;">💳</span>
+                  <span class="fw-semibold">Online Payment</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Special Instructions -->
+        <div class="card border-0 shadow-sm p-4">
+          <h5 class="fw-bold mb-3"><i class="fas fa-sticky-note text-warning me-2"></i>Special Instructions (Optional)</h5>
+          <textarea name="special_instructions" class="form-control" rows="2" placeholder="Any special requests?"></textarea>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="col-lg-5">
+        <div class="card border-0 shadow-sm p-4 sticky-top" style="top:80px;">
+          <h5 class="fw-bold mb-4">Order Summary</h5>
+          {% for item in items %}
+          <div class="d-flex justify-content-between mb-2 small">
+            <span>{{ item.menu_item.name }} × {{ item.quantity }}</span>
+            <span>₹{{ item.get_subtotal }}</span>
+          </div>
+          {% endfor %}
+          <hr>
+          <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal</span><span>₹{{ subtotal }}</span></div>
+          <div class="d-flex justify-content-between mb-2"><span class="text-muted">Delivery</span><span>₹{{ delivery_charge }}</span></div>
+          {% if discount > 0 %}
+          <div class="d-flex justify-content-between mb-2 text-success"><span>Discount ({{ coupon.code }})</span><span>−₹{{ discount }}</span></div>
+          {% endif %}
+          <hr>
+          <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
+            <span>Total Payable</span><span class="text-success">₹{{ final_total }}</span>
+          </div>
+          <button type="submit" class="btn btn-warning w-100 fw-bold py-2 fs-5">
+            <i class="fas fa-check-circle me-2"></i>Place Order
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+{% if google_maps_key %}
+<script>
+function initMap() {
+  const hyderabad = { lat: 17.385, lng: 78.4867 };
+  const map = new google.maps.Map(document.getElementById("map"), { zoom: 13, center: hyderabad });
+  let marker;
+  const geocoder = new google.maps.Geocoder();
+  map.addListener("click", (e) => {
+    if (marker) marker.setMap(null);
+    marker = new google.maps.Marker({ position: e.latLng, map });
+    geocoder.geocode({ location: e.latLng }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        document.getElementById("delivery_address").value = results[0].formatted_address;
+      }
+    });
+  });
+}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&callback=initMap" async defer></script>
+{% endif %}
+<script>
+document.querySelectorAll('.payment-option input').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.payment-label').forEach(l => l.classList.remove('border-warning','bg-warning-subtle'));
+    if (this.checked) this.nextElementSibling.classList.add('border-warning','bg-warning-subtle');
+  });
+});
+document.querySelector('#cod + label').classList.add('border-warning','bg-warning-subtle');
+</script>
+{% endblock %}

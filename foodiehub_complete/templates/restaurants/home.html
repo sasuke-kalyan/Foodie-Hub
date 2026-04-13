@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}FoodieHub - Order Food Online{% endblock %}
+{% block content %}
+<style>
+  .category-card {
+  height: 140px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-6px);
+}
+
+.category-img {
+  height: 100%;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+}
+
+.default-bg {
+  background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+}
+
+.category-overlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 8px;
+  background: rgba(0,0,0,0.4);
+  text-align: center;
+}
+</style>
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center min-vh-60">
+      <div class="col-lg-6">
+        <h1 class="display-4 fw-bold text-white mb-3">Hungry? <span class="text-warning">We've Got You!</span></h1>
+        <p class="lead text-white-50 mb-4">Order from 300+ menu items across 10 amazing restaurants. Fast delivery, great food.</p>
+        <form action="{% url 'restaurants:search' %}" method="get" class="d-flex gap-2">
+          <input class="form-control form-control-lg" type="search" name="q" placeholder="Search restaurants or food...">
+          <button class="btn btn-warning btn-lg px-4 fw-bold" type="submit"><i class="fas fa-search me-2"></i>Find</button>
+        </form>
+      </div>
+      <div class="col-lg-6 text-center d-none d-lg-block">
+        <div class="hero-emoji">🍕🍔🍜🍛🧁</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Bar -->
+<section class="stats-bar py-4">
+  <div class="container">
+    <div class="row text-center g-3">
+      <div class="col-6 col-md-3">
+        <div class="stat-item">
+          <div class="stat-number text-warning fw-bold fs-2">10+</div>
+          <div class="text-muted small">Restaurants</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-item">
+          <div class="stat-number text-warning fw-bold fs-2">300+</div>
+          <div class="text-muted small">Menu Items</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-item">
+          <div class="stat-number text-warning fw-bold fs-2">30 Min</div>
+          <div class="text-muted small">Avg Delivery</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-item">
+          <div class="stat-number text-warning fw-bold fs-2">4.5★</div>
+          <div class="text-muted small">Avg Rating</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Categories -->
+<section class="py-5">
+  <div class="container">
+    <h2 class="section-title fw-bold mb-4">Browse by Category</h2>
+
+    <div class="row g-4">
+
+      {% for cat in categories %}
+      <div class="col-6 col-md-3 col-lg-2">
+
+        <a href="{% url 'restaurants:list' %}?category={{ cat.slug }}" class="text-decoration-none">
+
+          <div class="category-card shadow-sm rounded-4 overflow-hidden position-relative">
+
+            {% if cat.image %}
+            <div class="category-img"
+                 style="background-image: url('{{ cat.image.url }}');">
+            </div>
+            {% else %}
+            <div class="category-img default-bg"></div>
+            {% endif %}
+
+            <div class="category-overlay">
+              <h6 class="text-white fw-bold m-0">{{ cat.name }}</h6>
+            </div>
+
+          </div>
+
+        </a>
+
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+</section>
+
+<!-- Featured Restaurants -->
+<section class="py-4 bg-light-custom">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title fw-bold mb-0">Featured Restaurants</h2>
+      <a href="{% url 'restaurants:list' %}" class="btn btn-outline-warning">View All <i class="fas fa-arrow-right ms-1"></i></a>
+    </div>
+    <div class="row g-4">
+      {% for restaurant in featured %}
+      <div class="col-md-6 col-lg-4">
+        <div class="restaurant-card card h-100 border-0 shadow-hover">
+          <div class="position-relative">
+            {% if restaurant.image %}
+              <img src="{{ restaurant.image.url }}" class="card-img-top restaurant-img" alt="{{ restaurant.name }}">
+            {% else %}
+              <div class="restaurant-img-placeholder d-flex align-items-center justify-content-center">
+                <span style="font-size:60px">🍽️</span>
+              </div>
+            {% endif %}
+            {% if restaurant.offer_text %}
+            <span class="badge bg-success position-absolute top-0 start-0 m-2 px-2 py-1">{{ restaurant.offer_text }}</span>
+            {% endif %}
+            {% if restaurant.is_veg %}
+            <span class="badge bg-success position-absolute top-0 end-0 m-2">🌿 Pure Veg</span>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <h5 class="card-title fw-bold mb-1">{{ restaurant.name }}</h5>
+            <p class="text-muted small mb-2">{{ restaurant.cuisine_type }}</p>
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="rating-badge"><i class="fas fa-star text-warning me-1"></i>{{ restaurant.average_rating }}</span>
+              <span class="text-muted small"><i class="fas fa-clock me-1"></i>{{ restaurant.delivery_time }}</span>
+              <span class="text-muted small"><i class="fas fa-motorcycle me-1"></i>₹{{ restaurant.delivery_charge }}</span>
+            </div>
+          </div>
+          <div class="card-footer bg-transparent border-0 pt-0">
+            <a href="{% url 'restaurants:detail' restaurant.slug %}" class="btn btn-warning w-100 fw-semibold">Order Now</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Why FoodieHub -->
+<section class="py-5">
+  <div class="container">
+    <h2 class="section-title text-center fw-bold mb-5">Why Choose FoodieHub?</h2>
+    <div class="row g-4 text-center">
+      <div class="col-md-4">
+        <div class="feature-card p-4 rounded-3">
+          <div class="feature-icon mb-3">⚡</div>
+          <h5 class="fw-bold">Fast Delivery</h5>
+          <p class="text-muted">Food delivered to your door in 30–45 minutes</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card p-4 rounded-3">
+          <div class="feature-icon mb-3">🎯</div>
+          <h5 class="fw-bold">Live Tracking</h5>
+          <p class="text-muted">Track your order status in real time</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card p-4 rounded-3">
+          <div class="feature-icon mb-3">💰</div>
+          <h5 class="fw-bold">Best Offers</h5>
+          <p class="text-muted">Use coupons and save big on every order</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

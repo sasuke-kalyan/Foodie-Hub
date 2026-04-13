@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}All Restaurants - FoodieHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <!-- Filters Sidebar -->
+    <div class="col-lg-3 mb-4">
+      <div class="filter-card card border-0 shadow-sm p-4">
+        <h5 class="fw-bold mb-4"><i class="fas fa-filter me-2 text-warning"></i>Filters</h5>
+        <form method="get">
+          <input type="hidden" name="q" value="{{ query }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Category</label>
+            <select name="category" class="form-select form-select-sm">
+              <option value="">All Categories</option>
+              {% for cat in categories %}
+              <option value="{{ cat.slug }}" {% if selected_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Min Rating</label>
+            <select name="rating" class="form-select form-select-sm">
+              <option value="">Any Rating</option>
+              <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4★ & above</option>
+              <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3★ & above</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="veg" id="vegCheck" {% if veg_only %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="vegCheck">🌿 Veg Only</label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-warning w-100 fw-semibold">Apply Filters</button>
+          <a href="{% url 'restaurants:list' %}" class="btn btn-outline-secondary w-100 mt-2">Clear Filters</a>
+        </form>
+      </div>
+    </div>
+    <!-- Listings -->
+    <div class="col-lg-9">
+      {% if query %}
+      <h4 class="mb-4">Results for "<strong>{{ query }}</strong>" — {{ restaurants|length }} found</h4>
+      {% else %}
+      <h4 class="mb-4">All Restaurants <span class="badge bg-warning text-dark">{{ restaurants|length }}</span></h4>
+      {% endif %}
+      {% if not restaurants %}
+      <div class="text-center py-5">
+        <div style="font-size:80px">🔍</div>
+        <h5 class="mt-3">No restaurants found</h5>
+        <a href="{% url 'restaurants:list' %}" class="btn btn-warning mt-3">Clear Search</a>
+      </div>
+      {% else %}
+      <div class="row g-4">
+        {% for restaurant in restaurants %}
+        <div class="col-md-6">
+          <div class="restaurant-card card h-100 border-0 shadow-hover">
+            <div class="position-relative">
+              {% if restaurant.image %}
+                <img src="{{ restaurant.image.url }}" class="card-img-top restaurant-img" alt="{{ restaurant.name }}">
+              {% else %}
+                <div class="restaurant-img-placeholder d-flex align-items-center justify-content-center"><span style="font-size:55px">🍽️</span></div>
+              {% endif %}
+              {% if restaurant.offer_text %}
+              <span class="badge bg-success position-absolute top-0 start-0 m-2">{{ restaurant.offer_text }}</span>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              <h5 class="card-title fw-bold mb-1">{{ restaurant.name }}</h5>
+              <p class="text-muted small mb-1">{{ restaurant.cuisine_type }}</p>
+              <p class="text-muted small mb-2" style="font-size:0.8rem">{{ restaurant.description|truncatechars:80 }}</p>
+              <div class="d-flex align-items-center justify-content-between mt-auto">
+                <span class="rating-badge"><i class="fas fa-star text-warning me-1"></i>{{ restaurant.average_rating }}</span>
+                <span class="text-muted small"><i class="fas fa-clock me-1"></i>{{ restaurant.delivery_time }}</span>
+                <span class="text-muted small"><i class="fas fa-motorcycle me-1"></i>₹{{ restaurant.delivery_charge }}</span>
+              </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+              <a href="{% url 'restaurants:detail' restaurant.slug %}" class="btn btn-warning w-100 fw-semibold">View Menu</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

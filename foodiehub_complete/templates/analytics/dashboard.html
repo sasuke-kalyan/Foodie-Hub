@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block title %}Analytics Dashboard - FoodieHub Admin{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 px-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0"><i class="fas fa-chart-bar text-warning me-2"></i>Admin Analytics</h3>
+    <div class="d-flex gap-2">
+      <a href="{% url 'analytics:city_map' %}" class="btn btn-outline-warning fw-semibold">
+        <i class="fas fa-map-marked-alt me-2"></i>City Map View
+      </a>
+      <a href="{% url 'orders:export_excel' %}" class="btn btn-outline-success fw-semibold">
+        <i class="fas fa-file-excel me-2"></i>Export CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-5">
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div style="font-size:36px;">👥</div>
+        <div class="fw-bold fs-2 text-primary mt-2">{{ total_users }}</div>
+        <div class="text-muted small">Total Customers</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div style="font-size:36px;">🏪</div>
+        <div class="fw-bold fs-2 text-warning mt-2">{{ total_restaurants }}</div>
+        <div class="text-muted small">Restaurants</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div style="font-size:36px;">📦</div>
+        <div class="fw-bold fs-2 text-success mt-2">{{ total_orders }}</div>
+        <div class="text-muted small">Total Orders</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm p-4 text-center">
+        <div style="font-size:36px;">💰</div>
+        <div class="fw-bold fs-2 text-success mt-2">₹{{ total_revenue|floatformat:0 }}</div>
+        <div class="text-muted small">Total Revenue</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4 mb-4">
+    <!-- Monthly Revenue Chart -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-chart-line text-warning me-2"></i>Monthly Revenue (Last 6 Months)</h5>
+        <div style="position:relative;height:280px;">
+          <canvas id="monthlyRevenueChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- Order Status Pie -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-chart-pie text-warning me-2"></i>Order Status</h5>
+        <div style="position:relative;height:280px;">
+          <canvas id="orderStatusChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Top Restaurants Bar Chart -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-trophy text-warning me-2"></i>Top Restaurants by Orders</h5>
+        <div style="position:relative;height:260px;">
+          <canvas id="topRestaurantsChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- Top Items -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm p-4">
+        <h5 class="fw-bold mb-3"><i class="fas fa-fire text-warning me-2"></i>Top 5 Selling Items</h5>
+        {% for item in top_items|slice:":5" %}
+        <div class="mb-2">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="small fw-semibold">{{ item.item_name }}</span>
+            <span class="small text-muted">{{ item.total_ordered }} orders</span>
+          </div>
+          <div class="progress" style="height:8px;border-radius:4px;">
+            <div class="progress-bar bg-warning" style="width:{% widthratio item.total_ordered top_items.0.total_ordered 100 %}%;border-radius:4px;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Orders Table -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+      <h5 class="fw-bold mb-0"><i class="fas fa-list text-warning me-2"></i>Recent Orders</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td class="fw-bold text-warning">{{ order.order_id }}</td>
+            <td>{{ order.user.username }}</td>
+            <td>{{ order.items.count }}</td>
+            <td class="fw-bold text-success">₹{{ order.total_price }}</td>
+            <td><span class="badge bg-secondary">{{ order.get_payment_method_display }}</span></td>
+            <td>
+              <span class="badge {% if order.status == 'delivered' %}bg-success{% elif order.status == 'cancelled' %}bg-danger{% elif order.status == 'placed' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+            <td class="text-muted small">{{ order.created_at|date:"d M, h:i A" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No orders yet</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
+const labelColor = isDark ? '#aaa' : '#666';
+
+// Monthly Revenue Line Chart
+new Chart(document.getElementById('monthlyRevenueChart'), {
+  type: 'line',
+  data: {
+    labels: {{ monthly_labels|safe|default:'["Nov","Dec","Jan","Feb","Mar","Apr"]' }},
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: {{ monthly_revenue|safe|default:'[12000,18500,14200,22000,28000,35000]' }},
+      borderColor: '#ffc107',
+      backgroundColor: 'rgba(255,193,7,0.12)',
+      borderWidth: 2.5,
+      pointBackgroundColor: '#ffc107',
+      pointRadius: 5,
+      tension: 0.4,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { color: labelColor } },
+      y: { grid: { color: gridColor }, ticks: { color: labelColor, callback: v => '₹' + v.toLocaleString() } }
+    }
+  }
+});
+
+// Order Status Doughnut
+new Chart(document.getElementById('orderStatusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Delivered', 'Preparing', 'Placed', 'Cancelled'],
+    datasets: [{
+      data: [
+        {{ delivered_count|default:45 }},
+        {{ preparing_count|default:12 }},
+        {{ placed_count|default:8 }},
+        {{ cancelled_count|default:3 }}
+      ],
+      backgroundColor: ['#198754','#ffc107','#0d6efd','#dc3545'],
+      borderWidth: 0,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: labelColor, padding: 14, font: { size: 11 } } }
+    },
+    cutout: '68%',
+  }
+});
+
+// Top Restaurants Horizontal Bar
+new Chart(document.getElementById('topRestaurantsChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ top_restaurant_names|safe|default:'["Biryani House","Pizza Corner","Burger Town","South Indian","Cafe Chill"]' }},
+    datasets: [{
+      label: 'Orders',
+      data: {{ top_restaurant_orders|safe|default:'[87,65,54,43,38]' }},
+      backgroundColor: ['#ffc107','#ff8c00','#ff6b35','#e65c00','#cc5200'],
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { color: labelColor } },
+      y: { grid: { display: false }, ticks: { color: labelColor } }
+    }
+  }
+});
+</script>
+{% endblock %}

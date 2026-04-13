@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Add Address - FoodieHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm p-4">
+        <h4 class="fw-bold mb-4"><i class="fas fa-map-marker-alt text-warning me-2"></i>Add Delivery Address</h4>
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-warning w-100 fw-bold">Save Address</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

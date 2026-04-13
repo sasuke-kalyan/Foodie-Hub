@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}{{ restaurant.name }} — Photo Gallery{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">📸 {{ restaurant.name }} Gallery</h3>
+      <p class="text-muted mb-0">{{ photos|length }} photos</p>
+    </div>
+    <a href="{% url 'restaurants:detail' restaurant.slug %}" class="btn btn-outline-warning">
+      ← Back to Menu
+    </a>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="?type=" class="btn btn-sm {% if not photo_type %}btn-warning{% else %}btn-outline-secondary{% endif %} fw-semibold">All</a>
+    {% for val, label in types %}
+    <a href="?type={{ val }}" class="btn btn-sm {% if photo_type == val %}btn-warning{% else %}btn-outline-secondary{% endif %} fw-semibold">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if photos %}
+  <!-- Masonry-style gallery -->
+  <div class="gallery-grid">
+    {% for photo in photos %}
+    <div class="gallery-item {% if photo.is_featured %}featured{% endif %}"
+         onclick="openLightbox('{{ photo.image.url }}', '{{ photo.caption }}')">
+      <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:restaurant.name }}" loading="lazy">
+      <div class="gallery-overlay">
+        <div class="gallery-caption">{{ photo.caption|default:photo.get_photo_type_display }}</div>
+        {% if photo.is_featured %}<span class="badge bg-warning text-dark">Featured</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div style="font-size:80px;">📸</div>
+    <h5 class="mt-3">No photos yet</h5>
+    <p class="text-muted">Photos coming soon!</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
+  <img id="lightboxImg" src="" style="max-width:92vw;max-height:82vh;border-radius:12px;object-fit:contain;">
+  <p id="lightboxCaption" style="color:#fff;margin-top:12px;font-size:14px;opacity:.8;"></p>
+  <button onclick="closeLightbox()" style="position:absolute;top:20px;right:24px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;">✕</button>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.gallery-grid { columns: 3; gap: 12px; }
+@media (max-width:768px) { .gallery-grid { columns: 2; } }
+@media (max-width:480px) { .gallery-grid { columns: 1; } }
+.gallery-item { break-inside: avoid; margin-bottom: 12px; border-radius: 12px; overflow: hidden; position: relative; cursor: pointer; }
+.gallery-item img { width: 100%; display: block; transition: transform .3s; }
+.gallery-item:hover img { transform: scale(1.04); }
+.gallery-item.featured { break-inside: avoid; }
+.gallery-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 50%, rgba(0,0,0,.7)); opacity: 0; transition: .25s; display: flex; flex-direction: column; justify-content: flex-end; padding: 12px; }
+.gallery-item:hover .gallery-overlay { opacity: 1; }
+.gallery-caption { color: #fff; font-size: 12px; font-weight: 500; }
+#lightbox { display: none; }
+#lightbox.open { display: flex !important; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openLightbox(src, caption) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightboxCaption').textContent = caption;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightbox(); });
+</script>
+{% endblock %}

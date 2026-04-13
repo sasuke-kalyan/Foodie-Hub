@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}{{ restaurant.name }} - FoodieHub{% endblock %}
+{% block content %}
+<div class="container-fluid px-0">
+  <!-- Restaurant Header -->
+  <div class="restaurant-header position-relative">
+    {% if restaurant.image %}
+      <img src="{{ restaurant.image.url }}" class="restaurant-banner" alt="{{ restaurant.name }}">
+    {% else %}
+      <div class="restaurant-banner-placeholder"></div>
+    {% endif %}
+    <div class="restaurant-header-overlay">
+      <div class="container">
+        <h1 class="text-white fw-bold display-5">{{ restaurant.name }}</h1>
+        <p class="text-white-50 mb-2">{{ restaurant.cuisine_type }} • {{ restaurant.address }}</p>
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="badge bg-success fs-6 px-3 py-2"><i class="fas fa-star me-1"></i>{{ avg_rating }} ({{ review_count }} reviews)</span>
+          <span class="badge bg-dark fs-6 px-3 py-2"><i class="fas fa-clock me-1"></i>{{ restaurant.delivery_time }}</span>
+          <span class="badge bg-dark fs-6 px-3 py-2"><i class="fas fa-motorcycle me-1"></i>₹{{ restaurant.delivery_charge }} Delivery</span>
+          {% if restaurant.is_veg %}<span class="badge bg-success px-3 py-2">🌿 Pure Veg</span>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="row g-4">
+    <!-- Menu -->
+    <div class="col-lg-8">
+      {% if restaurant.offer_text %}
+      <div class="alert alert-success d-flex align-items-center mb-4">
+        <i class="fas fa-tag me-2 fs-4"></i><strong>{{ restaurant.offer_text }}</strong>
+      </div>
+      {% endif %}
+
+      {% for category, items in categories_with_items.items %}
+      <div class="mb-5" id="cat-{{ forloop.counter }}">
+        <h4 class="fw-bold border-bottom pb-2 mb-3 text-warning">{{ category }}</h4>
+        <div class="row g-3">
+          {% for item in items %}
+          <div class="col-12">
+            <div class="menu-item-card card border-0 shadow-sm">
+              <div class="card-body d-flex align-items-center gap-3 p-3">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    {% if item.is_veg %}
+                      <span class="veg-dot"></span>
+                    {% else %}
+                      <span class="nonveg-dot"></span>
+                    {% endif %}
+                    <h6 class="mb-0 fw-bold">{{ item.name }}</h6>
+                    {% if item.is_bestseller %}<span class="badge bg-warning text-dark small">⭐ Bestseller</span>{% endif %}
+                  </div>
+                  <p class="text-muted small mb-2">{{ item.description|truncatechars:120 }}</p>
+                  <p class="fw-bold text-success mb-0 fs-5">₹{{ item.price }}</p>
+                </div>
+                {% if item.image %}
+                <img src="{{ item.image.url }}" class="menu-item-img" alt="{{ item.name }}">
+                {% else %}
+                <div class="menu-item-img-placeholder">🍽️</div>
+                {% endif %}
+                <div class="d-flex flex-column gap-2 ms-2">
+                  {% if user.is_authenticated and user.role == 'customer' %}
+                  <a href="{% url 'cart:add' item.id %}" class="btn btn-warning btn-sm fw-bold px-3">
+                    <i class="fas fa-plus me-1"></i>Add
+                  </a>
+                  <a href="{% url 'wishlist:toggle' item.id %}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-heart"></i>
+                  </a>
+                  {% else %}
+                  <a href="{% url 'accounts:login' %}" class="btn btn-warning btn-sm">Add</a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="sticky-sidebar">
+        <!-- Quick Info -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">Restaurant Info</h6>
+            <div class="info-row"><i class="fas fa-map-marker-alt text-warning me-2"></i>{{ restaurant.address }}, {{ restaurant.city }}</div>
+            <div class="info-row"><i class="fas fa-phone text-warning me-2"></i>{{ restaurant.phone|default:"N/A" }}</div>
+            <div class="info-row"><i class="fas fa-shopping-bag text-warning me-2"></i>Min Order: ₹{{ restaurant.min_order }}</div>
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">Ratings & Reviews</h6>
+            <div class="text-center mb-3">
+              <div class="display-4 fw-bold text-warning">{{ avg_rating }}</div>
+              <div class="text-muted small">{{ review_count }} Reviews</div>
+              <div>{% for i in "12345" %}{% if forloop.counter <= avg_rating|floatformat:"0"|add:"0" %}<i class="fas fa-star text-warning"></i>{% else %}<i class="far fa-star text-muted"></i>{% endif %}{% endfor %}</div>
+            </div>
+
+            {% if user.is_authenticated and not user_review %}
+            <form method="post" action="{% url 'reviews:add' restaurant.slug %}">
+              {% csrf_token %}
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Your Rating</label>
+                <select name="rating" class="form-select form-select-sm">
+                  {% for i in "54321" %}<option value="{{ i }}">{{ i }} ★</option>{% endfor %}
+                </select>
+              </div>
+              <div class="mb-2">
+                <textarea name="comment" class="form-control form-control-sm" rows="3" placeholder="Write your review..." required></textarea>
+              </div>
+              <button type="submit" class="btn btn-warning btn-sm w-100">Submit Review</button>
+            </form>
+            {% elif user_review %}
+            <div class="alert alert-success small py-2">You reviewed this restaurant.</div>
+            <a href="{% url 'reviews:delete' user_review.id %}" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Delete review?')">Delete My Review</a>
+            {% endif %}
+
+            <div class="mt-3">
+              {% for review in reviews|slice:":5" %}
+              <div class="review-item border-bottom pb-2 mb-2">
+                <div class="d-flex justify-content-between">
+                  <strong class="small">{{ review.user.username }}</strong>
+                  <span class="text-warning small">{% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% endif %}{% endfor %}</span>
+                </div>
+                <p class="text-muted small mb-0">{{ review.comment }}</p>
+              </div>
+              {% empty %}
+              <p class="text-muted small">No reviews yet. Be the first!</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

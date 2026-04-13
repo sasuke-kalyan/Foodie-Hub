@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Chat with {{ room.customer.username }}{% endblock %}
+{% block extra_css %}
+<style>
+.chat-container{height:440px;overflow-y:auto;background:var(--bs-light);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;}
+.msg-bubble{max-width:72%;padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.5;}
+.msg-customer{background:#fff;border:1px solid #eee;color:#333;border-bottom-left-radius:4px;align-self:flex-start;}
+.msg-owner{background:#ffc107;color:#000;border-bottom-right-radius:4px;align-self:flex-end;}
+.msg-time{font-size:10px;opacity:.6;margin-top:3px;}
+.msg-wrapper{display:flex;flex-direction:column;}
+.msg-wrapper.customer{align-items:flex-start;}
+.msg-wrapper.owner{align-items:flex-end;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-lg overflow-hidden">
+        <div class="card-header p-3 d-flex align-items-center gap-3" style="background:#1a1a2e;">
+          <div class="avatar-sm">{{ room.customer.username|first|upper }}</div>
+          <div class="flex-grow-1">
+            <div class="fw-bold text-white">{{ room.customer.username }}</div>
+            <small class="text-muted">Customer</small>
+          </div>
+          <a href="{% url 'chat:owner_list' %}" class="btn btn-outline-light btn-sm">← All Chats</a>
+        </div>
+        <div class="chat-container" id="chatContainer">
+          {% for msg in room.messages.all %}
+          <div class="msg-wrapper {% if msg.sender_type == 'customer' %}customer{% else %}owner{% endif %}">
+            <div class="msg-bubble msg-{{ msg.sender_type }}">
+              {{ msg.message }}
+              <div class="msg-time">{{ msg.created_at|date:"h:i A" }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="card-footer p-3 bg-white">
+          <form method="post" class="d-flex gap-2">
+            {% csrf_token %}
+            <input type="text" name="message" class="form-control" placeholder="Reply to customer..." required>
+            <button type="submit" class="btn btn-warning fw-bold px-4"><i class="fas fa-paper-plane"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const c = document.getElementById('chatContainer');
+c.scrollTop = c.scrollHeight;
+</script>
+{% endblock %}

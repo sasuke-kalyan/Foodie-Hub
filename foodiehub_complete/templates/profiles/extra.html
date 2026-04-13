@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block title %}My FoodieHub Profile{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row g-4">
+
+    <!-- Birthday Card -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3"><span style="font-size:24px;">🎂</span> Birthday Offer</h5>
+          <p class="text-muted small mb-3">Add your birthday and get a <strong class="text-warning">special discount coupon</strong> on your birthday every year!</p>
+          {% if profile.date_of_birth %}
+          <div class="alert alert-success py-2">
+            <i class="fas fa-check-circle me-2"></i>Birthday saved: <strong>{{ profile.date_of_birth|date:"d M" }}</strong>
+            {% if profile.is_birthday_today %}
+            <div class="mt-2 fw-bold text-success">🎉 Happy Birthday! Check your coupons!</div>
+            {% endif %}
+          </div>
+          {% else %}
+          <form method="post" action="{% url 'profiles:birthday' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Your Date of Birth</label>
+              <input type="date" name="date_of_birth" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-warning fw-bold w-100">
+              <i class="fas fa-birthday-cake me-2"></i>Save Birthday
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscription Card -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3"><span style="font-size:24px;">👑</span> Subscription Plan</h5>
+          {% if profile.subscription_active %}
+          <div class="alert alert-warning py-2">
+            <strong>{{ profile.get_subscription_plan_display }}</strong> — Active
+            <div class="small text-muted">Expires: {{ profile.subscription_expiry|date:"d M Y" }}</div>
+          </div>
+          <div class="small text-muted">
+            {% if profile.subscription_plan == 'basic' %}
+            ✅ Free delivery on orders above ₹299<br>✅ 5% extra discount on all orders
+            {% elif profile.subscription_plan == 'premium' %}
+            ✅ Free delivery on ALL orders<br>✅ 10% extra discount<br>✅ Priority order processing
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="plan-card border rounded-3 p-3 text-center">
+                <div class="fw-bold">Basic</div>
+                <div class="text-warning fw-bold fs-5">₹99<span class="text-muted fs-6">/mo</span></div>
+                <div class="text-muted small mb-2">Free delivery ₹299+<br>5% extra discount</div>
+                <form method="post" action="{% url 'profiles:subscribe' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="plan" value="basic">
+                  <button type="submit" class="btn btn-outline-warning btn-sm w-100">Subscribe</button>
+                </form>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="plan-card border border-warning rounded-3 p-3 text-center" style="background:#fff9e6;">
+                <div class="badge bg-warning text-dark mb-1">Popular</div>
+                <div class="fw-bold">Premium</div>
+                <div class="text-warning fw-bold fs-5">₹199<span class="text-muted fs-6">/mo</span></div>
+                <div class="text-muted small mb-2">Free ALL delivery<br>10% extra discount</div>
+                <form method="post" action="{% url 'profiles:subscribe' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="plan" value="premium">
+                  <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold">Subscribe</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Referral Card -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-1"><span style="font-size:24px;">👫</span> Refer & Earn</h5>
+          <p class="text-muted small mb-4">Share your referral code with friends. When they place their first order, <strong class="text-warning">you earn ₹50 credits!</strong></p>
+          <div class="row g-3 align-items-center">
+            <div class="col-md-7">
+              <label class="form-label fw-semibold">Your Referral Link</label>
+              <div class="input-group">
+                <input type="text" class="form-control" id="refLink" value="{{ referral_link }}" readonly>
+                <button class="btn btn-warning fw-bold" onclick="copyRef()">
+                  <i class="fas fa-copy me-1"></i>Copy
+                </button>
+              </div>
+              <small class="text-muted mt-1 d-block">Or share code: <strong class="text-warning fs-5">{{ profile.referral_code }}</strong></small>
+            </div>
+            <div class="col-md-5">
+              <div class="row g-2 text-center">
+                <div class="col-6">
+                  <div class="bg-light rounded-3 p-3">
+                    <div class="fw-bold fs-4 text-warning">{{ referrals.count }}</div>
+                    <div class="text-muted small">Friends Referred</div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="bg-light rounded-3 p-3">
+                    <div class="fw-bold fs-4 text-success">₹{{ profile.referral_credits|floatformat:0 }}</div>
+                    <div class="text-muted small">Credits Earned</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% if referrals %}
+          <div class="mt-4">
+            <h6 class="fw-bold mb-2">Friends who joined:</h6>
+            <div class="d-flex flex-wrap gap-2">
+              {% for ref in referrals %}
+              <span class="badge bg-warning text-dark px-3 py-2">{{ ref.username }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function copyRef() {
+  const input = document.getElementById('refLink');
+  input.select();
+  navigator.clipboard.writeText(input.value);
+  event.target.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+  setTimeout(() => event.target.innerHTML = '<i class="fas fa-copy me-1"></i>Copy', 2000);
+}
+</script>
+{% endblock %}

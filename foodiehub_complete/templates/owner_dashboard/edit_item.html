@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Edit Item - FoodieHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm p-4">
+        <h4 class="fw-bold mb-4"><i class="fas fa-edit text-warning me-2"></i>Edit Menu Item</h4>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3"><label class="form-label fw-semibold">Item Name</label><input type="text" name="name" class="form-control" value="{{ item.name }}" required></div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Category</label>
+            <select name="category" class="form-select">
+              <option value="Starters" {% if item.category == 'Starters' %}selected{% endif %}>Starters</option>
+              <option value="Main Course" {% if item.category == 'Main Course' %}selected{% endif %}>Main Course</option>
+              <option value="Snacks" {% if item.category == 'Snacks' %}selected{% endif %}>Snacks</option>
+              <option value="Breads" {% if item.category == 'Breads' %}selected{% endif %}>Breads</option>
+              <option value="Desserts" {% if item.category == 'Desserts' %}selected{% endif %}>Desserts</option>
+              <option value="Beverages" {% if item.category == 'Beverages' %}selected{% endif %}>Beverages</option>
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label fw-semibold">Description</label><textarea name="description" class="form-control" rows="4" required>{{ item.description }}</textarea></div>
+          <div class="mb-3"><label class="form-label fw-semibold">Price (₹)</label><input type="number" name="price" class="form-control" value="{{ item.price }}" step="0.01" required></div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Image (leave blank to keep current)</label>
+            {% if item.image %}<div class="mb-2"><img src="{{ item.image.url }}" class="rounded-3" style="height:80px;object-fit:cover;"></div>{% endif %}
+            <input type="file" name="image" class="form-control" accept="image/*">
+          </div>
+          <div class="mb-4 d-flex gap-4">
+            <div class="form-check"><input type="checkbox" name="is_veg" id="is_veg" class="form-check-input" {% if item.is_veg %}checked{% endif %}><label class="form-check-label fw-semibold" for="is_veg">🌿 Vegetarian</label></div>
+            <div class="form-check"><input type="checkbox" name="is_available" id="is_available" class="form-check-input" {% if item.is_available %}checked{% endif %}><label class="form-check-label fw-semibold" for="is_available">Available</label></div>
+            <div class="form-check"><input type="checkbox" name="is_bestseller" id="is_bestseller" class="form-check-input" {% if item.is_bestseller %}checked{% endif %}><label class="form-check-label fw-semibold" for="is_bestseller">⭐ Bestseller</label></div>
+          </div>
+          <button type="submit" class="btn btn-warning w-100 fw-bold">Save Changes</button>
+          <a href="{% url 'owner_dashboard:menu' %}" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

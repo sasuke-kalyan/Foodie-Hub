@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Cart - FoodieHub{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <h3 class="fw-bold mb-4"><i class="fas fa-shopping-cart text-warning me-2"></i>Your Cart</h3>
+  {% if items %}
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+          {% for item in items %}
+          <div class="cart-item d-flex align-items-center gap-3 p-3 border-bottom">
+            {% if item.menu_item.image %}
+              <img src="{{ item.menu_item.image.url }}" class="rounded-3" style="width:70px;height:70px;object-fit:cover;" alt="">
+            {% else %}
+              <div class="cart-item-placeholder rounded-3 d-flex align-items-center justify-content-center" style="width:70px;height:70px;background:#f8f9fa;font-size:30px;">🍽️</div>
+            {% endif %}
+            <div class="flex-grow-1">
+              <h6 class="fw-bold mb-0">{{ item.menu_item.name }}</h6>
+              <small class="text-muted">{{ item.menu_item.restaurant.name }}</small>
+              <div class="fw-bold text-success mt-1">₹{{ item.menu_item.price }}</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <form method="post" action="{% url 'cart:update' item.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="decrease">
+                <button class="btn btn-outline-secondary btn-sm rounded-circle" style="width:30px;height:30px;padding:0;">−</button>
+              </form>
+              <span class="fw-bold fs-5 mx-1">{{ item.quantity }}</span>
+              <form method="post" action="{% url 'cart:update' item.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="increase">
+                <button class="btn btn-warning btn-sm rounded-circle" style="width:30px;height:30px;padding:0;">+</button>
+              </form>
+            </div>
+            <div class="fw-bold text-success" style="min-width:70px;text-align:right;">₹{{ item.get_subtotal }}</div>
+            <a href="{% url 'cart:remove' item.id %}" class="btn btn-outline-danger btn-sm ms-2">
+              <i class="fas fa-trash"></i>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Coupon -->
+      <div class="card border-0 shadow-sm mt-4 p-3">
+        <h6 class="fw-bold mb-3"><i class="fas fa-tag text-warning me-2"></i>Apply Coupon</h6>
+        {% if coupon %}
+        <div class="alert alert-success d-flex justify-content-between align-items-center py-2">
+          <span><strong>{{ coupon.code }}</strong> applied — You save ₹{{ discount }}</span>
+          <a href="{% url 'cart:remove_coupon' %}" class="btn btn-sm btn-outline-danger">Remove</a>
+        </div>
+        {% else %}
+        <form method="post" action="{% url 'cart:apply_coupon' %}" class="d-flex gap-2">
+          {% csrf_token %}
+          <input type="text" name="coupon_code" class="form-control" placeholder="Enter coupon code (e.g. SAVE20)">
+          <button type="submit" class="btn btn-warning fw-semibold px-4">Apply</button>
+        </form>
+        <div class="mt-2">
+          <small class="text-muted">Try: <span class="badge bg-light text-dark border">SAVE20</span> <span class="badge bg-light text-dark border">FIRST50</span> <span class="badge bg-light text-dark border">WELCOME10</span></small>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm p-4 sticky-top" style="top:80px;">
+        <h5 class="fw-bold mb-4">Order Summary</h5>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal</span><span>₹{{ subtotal }}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Delivery Charge</span><span>₹{{ delivery_charge }}</span></div>
+        {% if discount > 0 %}
+        <div class="d-flex justify-content-between mb-2 text-success"><span>Coupon Discount</span><span>−₹{{ discount }}</span></div>
+        {% endif %}
+        <hr>
+        <div class="d-flex justify-content-between mb-4 fw-bold fs-5"><span>Total</span><span class="text-success">₹{{ final_total }}</span></div>
+        <a href="{% url 'orders:checkout' %}" class="btn btn-warning w-100 fw-bold py-2 fs-5">
+          <i class="fas fa-lock me-2"></i>Proceed to Checkout
+        </a>
+        <a href="{% url 'restaurants:list' %}" class="btn btn-outline-secondary w-100 mt-2">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div style="font-size:100px;">🛒</div>
+    <h4 class="mt-3 fw-bold">Your cart is empty</h4>
+    <p class="text-muted">Add items from restaurants to get started</p>
+    <a href="{% url 'restaurants:list' %}" class="btn btn-warning btn-lg mt-2 fw-bold">Browse Restaurants</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
