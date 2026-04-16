@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
+from django.http import JsonResponse   # ✅ NEW LINE ADDED
 from .models import Restaurant, Category
 from menu.models import MenuItem
 
@@ -20,7 +21,6 @@ def restaurant_list(request):
     restaurants = Restaurant.objects.filter(is_active=True)
     categories = Category.objects.all()
 
-    # Filters
     query = request.GET.get('q', '')
     category = request.GET.get('category', '')
     veg_only = request.GET.get('veg', '')
@@ -39,7 +39,6 @@ def restaurant_list(request):
     if veg_only:
         restaurants = restaurants.filter(is_veg=True)
 
-    # Filter by rating (manual since rating is computed)
     if rating_filter:
         try:
             min_rating = float(rating_filter)
@@ -106,3 +105,18 @@ def search_view(request):
         'menu_items': menu_items,
     }
     return render(request, 'restaurants/search.html', context)
+
+def live_search(request):
+    query = request.GET.get('q', '')
+    
+    results = []
+    if query:
+        restaurants = Restaurant.objects.filter(name__icontains=query)
+
+        for r in restaurants:
+            results.append({
+                'name': r.name,
+                'slug': r.slug,
+            })
+
+    return JsonResponse({'results': results})

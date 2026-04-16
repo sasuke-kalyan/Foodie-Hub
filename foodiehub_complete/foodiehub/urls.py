@@ -2,12 +2,24 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+
+from django.views.generic import TemplateView
+
 from restaurants import views as home_views
 from accounts import views as acc_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home_views.home, name='home'),
+
+    # ✅ INTRO WILL LOAD FIRST
+    path('', TemplateView.as_view(template_name="intro.html")),
+
+    # ✅ MAIN HOME PAGE
+    path('home/', home_views.home, name='home'),
+
+    # (optional) keep intro URL also
+    path('intro/', TemplateView.as_view(template_name="intro.html")),
+
     path('accounts/', include('accounts.urls')),
     path('restaurants/', include('restaurants.urls')),
     path('menu/', include('menu.urls')),
@@ -24,6 +36,10 @@ urlpatterns = [
     path('profile/', include('profiles.urls')),
     path('rewards/', include('gamification.urls')),
     path('gallery/', include('gallery.urls')),
+
     path('accounts/set-language/', acc_views.set_language, name='set_language'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
-  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]
+
+# ✅ MEDIA FILES
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FoodieHub Intro</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: black;
+    }
+
+    video {
+      width: 100%;
+      height: 100vh;
+      object-fit: cover;
+    }
+  </style>
+</head>
+
+<body>
+
+<video autoplay muted onended="goHome()">
+  <source src="/static/intro.mp4" type="video/mp4">
+</video>
+
+<script>
+function goHome() {
+  window.location.href = "/home/";
+}
+
+/* Backup redirect (IMPORTANT) */
+setTimeout(goHome, 6000);
+</script>
+
+</body>
+</html>
